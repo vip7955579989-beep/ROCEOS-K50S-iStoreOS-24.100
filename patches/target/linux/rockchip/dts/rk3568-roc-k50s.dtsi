@@ -188,8 +188,7 @@
 	leds {
 		compatible = "gpio-leds";
 		pinctrl-names = "default";
-		pinctrl-0 =
-			<&led_green_en>;
+		
 
 		led_green: green {
 			gpios = <&gpio2 RK_PD7 GPIO_ACTIVE_HIGH>;
