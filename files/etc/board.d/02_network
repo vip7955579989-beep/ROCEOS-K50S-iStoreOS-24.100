@@ -1,20 +1,20 @@
 #!/bin/sh
-# ROCEOS K50S (RK3568) Official Network Interface Mapping Specification
+# ROCEOS K50S Official Network Interface Mapping Specification (Extracted from 原厂 v220307)
 
 . /lib/functions/uci-defaults.sh
+. /lib/functions/system.sh
 
 board_config_update
 board=$(board_name)
 
 case "$board" in
 *)
-	# 依照 ROCEOS 官网规格：
-	# ETH0, ETH1, ETH2 (2.5G) 分配为 LAN 局域网接口
-	# ETH3 (1G) 分配为 WAN 广域网接口
-	ucidef_set_interfaces_lan_wan "eth0 eth1 eth2" "eth3"
+	# ROCEOS K50S 原厂网口绝对定义：WAN 口为 eth0，LAN 口为 eth1 eth2 eth3 eth4
+	ucidef_set_interfaces_lan_wan 'eth1 eth2 eth3 eth4' 'eth0'
 	;;
 esac
 
 board_config_flush
 
 exit 0
+
