@@ -58,13 +58,14 @@ cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/files/etc
 
 cat << 'UCI_EOF' > files/etc/uci-defaults/99-custom-k50s
 #!/bin/sh
-uci set network.lan.ipaddr='192.168.100.1'
+uci set network.lan.ipaddr='192.168.0.254'
 uci set system.@system[0].timezone='CST-8'
 uci set system.@system[0].zonename='Asia/Shanghai'
 uci commit network
 uci commit system
 exit 0
 UCI_EOF
+
 chmod +x files/etc/uci-defaults/99-custom-k50s
 
 echo "=================================================="
