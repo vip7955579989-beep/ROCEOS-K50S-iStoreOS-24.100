@@ -187,15 +187,12 @@
 
 	leds {
 		compatible = "gpio-leds";
-		pinctrl-names = "default";
-		
 
 		led_green: green {
 			gpios = <&gpio2 RK_PD7 GPIO_ACTIVE_HIGH>;
-			label = "green:sys";
+			label = "green:running";
 			linux,default-trigger = "heartbeat";
 		};
-		
 	};
 
 };

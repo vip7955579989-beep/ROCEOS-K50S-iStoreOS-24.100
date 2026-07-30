@@ -43,8 +43,11 @@ jobs:
           TARGET_MK="openwrt/target/linux/rockchip/image/armv8.mk"
           [ ! -f "$TARGET_MK" ] && TARGET_MK="openwrt/target/linux/rockchip/image/Makefile"
           if [ -f "$TARGET_MK" ]; then
-            printf "\ndefine Device/roceos_k50s\n  \$(call Device/rk3568)\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := easepi-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
+            printf "\ndefine Device/roceos_k50s\n  \$(call Device/rk3568)\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
           fi
+          
+          mkdir -p openwrt/staging_dir/target-aarch64_generic_musl/image/
+          cp -f u-boot/k50s-rk3568-u-boot-rockchip.bin openwrt/staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin
 
           mkdir -p openwrt/files/etc/board.d/
           mkdir -p openwrt/files/etc/uci-defaults/
