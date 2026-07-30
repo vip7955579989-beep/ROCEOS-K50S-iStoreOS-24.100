@@ -47,7 +47,10 @@ jobs:
           fi
           
           mkdir -p openwrt/staging_dir/target-aarch64_generic_musl/image/
-          cp -f u-boot/k50s-rk3568-u-boot-rockchip.bin openwrt/staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin
+          mkdir -p openwrt/build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
+          mkdir -p openwrt/target/linux/rockchip/image/
+          cp -f u-boot/k50s-rk3568-u-boot-rockchip.bin openwrt/staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+          cp -f u-boot/k50s-rk3568-u-boot-rockchip.bin openwrt/target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
 
           mkdir -p openwrt/files/etc/board.d/
           mkdir -p openwrt/files/etc/uci-defaults/
@@ -77,6 +80,8 @@ jobs:
       - name: 6. 配置文件生成与下载依赖包
         run: |
           cd openwrt
+          mkdir -p staging_dir/target-aarch64_generic_musl/image/
+          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
           echo "CONFIG_TARGET_rockchip=y" > .config
           echo "CONFIG_TARGET_rockchip_armv8=y" >> .config
           echo "CONFIG_TARGET_rockchip_armv8_DEVICE_roceos_k50s=y" >> .config
