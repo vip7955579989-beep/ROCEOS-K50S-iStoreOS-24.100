@@ -5,12 +5,12 @@ echo "=================================================="
 echo "=== 1. 清理并进入 Linux 本地工作目录 ==="
 echo "=================================================="
 cd /home/builder
-rm -rf openwrt
+sudo rm -rf openwrt
 
 echo "=================================================="
 echo "=== 2. 克隆 iStoreOS 24.10 官方源码 ==="
 echo "=================================================="
-git clone --depth 1 https://github.com/istoreos/istoreos.git -b istoreos-24.10 openwrt
+git clone https://github.com/istoreos/istoreos.git -b istoreos-24.10 openwrt
 cd openwrt
 
 echo "=================================================="
@@ -37,13 +37,20 @@ define Device/roceos_k50s
   DEVICE_MODEL := K50S
   SOC := rk3568
   DEVICE_DTS := rockchip/rk3568-roc-k50s
-  UBOOT_IMAGE := easepi-rk3568-u-boot-rockchip.bin
+  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin
   SUPPORTED_DEVICES += roceos,k50s
   DEVICE_PACKAGES := kmod-brcmfmac
 endef
 TARGET_DEVICES += roceos_k50s
 DEVICE_EOF
 fi
+
+mkdir -p staging_dir/target-aarch64_generic_musl/image/
+mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
+mkdir -p target/linux/rockchip/image/
+cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+
 
 mkdir -p files/etc/board.d/
 mkdir -p files/etc/uci-defaults/
