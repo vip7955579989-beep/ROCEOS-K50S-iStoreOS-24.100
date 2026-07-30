@@ -1,0 +1,29 @@
+#!/bin/sh
+# ROCEOS K50S (RK3568) Board Network Topology Configuration
+
+. /lib/functions/uci-defaults.sh
+
+board_config_update
+
+board=$(board_name)
+
+case "$board" in
+roceos,k50s|\
+roceos,roc-k50s|\
+rockchip,rk3568-k50s|\
+rockchip,rk3568-roc-k50s|\
+*k50s*)
+	# 根据 K50S 真实物理面板接口：
+	# ETH0(2.5G), ETH1(2.5G), ETH2(1G) 默认分配为 LAN 桥 (保证黄线插ETH1能立刻进入后台)
+	# ETH3(1G), ETH4(1G) 分配为 WAN / WAN1
+	ucidef_set_interfaces_lan_wan "eth0 eth1 eth2 eth3" "eth4"
+	;;
+*)
+	# 默认逻辑
+	ucidef_set_interfaces_lan_wan "eth0 eth1 eth2" "eth3"
+	;;
+esac
+
+board_config_flush
+
+exit 0
