@@ -22,6 +22,7 @@ jobs:
 
       - name: 2. 释放 GitHub 云端磁盘空间 (剥离 35GB 垃圾)
         uses: easymosizm/clean-disk@v2
+        continue-on-error: true
 
       - name: 2.5 准备 Linux 编译依赖包
         env:
