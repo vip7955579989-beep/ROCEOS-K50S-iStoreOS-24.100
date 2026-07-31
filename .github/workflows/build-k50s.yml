@@ -1,4 +1,4 @@
-name: 编译 ROCEOS K50S 专属 iStoreOS 24.10 固件
+name: 编译 ROCEOS K50S 专属 iStoreOS 24.12 固件
 
 on:
   workflow_dispatch:
@@ -27,9 +27,9 @@ jobs:
           sudo -E apt-get -qq install -y build-essential clang flex bison gawk gettext git libncurses5-dev libssl-dev python3-distutils python3-pyelftools rsync unzip zlib1g-dev squashfs-tools device-tree-compiler swig python3-dev python3-setuptools
           sudo -E apt-get -qq clean
 
-      - name: 3. 拉取 iStoreOS 24.10 官方源码
+      - name: 3. 拉取 iStoreOS 24.12 官方源码
         run: |
-          git clone --depth 1 https://github.com/istoreos/istoreos.git -b istoreos-24.10 openwrt
+          git clone --depth 1 https://github.com/istoreos/istoreos.git -b istoreos-24.12 openwrt || git clone --depth 1 https://github.com/istoreos/istoreos.git -b main openwrt
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
@@ -43,7 +43,7 @@ jobs:
           TARGET_MK="openwrt/target/linux/rockchip/image/armv8.mk"
           [ ! -f "$TARGET_MK" ] && TARGET_MK="openwrt/target/linux/rockchip/image/Makefile"
           if [ -f "$TARGET_MK" ]; then
-            printf "\ndefine Device/roceos_k50s\n  \$(call Device/rk3568)\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
+            printf "\ndefine Device/roceos_k50s\n  \$(call Device/rk3568)\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
           fi
           
           mkdir -p openwrt/staging_dir/target-aarch64_generic_musl/image/
@@ -92,9 +92,10 @@ jobs:
           echo "CONFIG_TARGET_rockchip_armv8_DEVICE_roceos_k50s=y" >> .config
           echo "CONFIG_TARGET_KERNEL_PARTSIZE=128" >> .config
           echo "CONFIG_TARGET_ROOTFS_PARTSIZE=3072" >> .config
-          # 网卡与硬件驱动 (RTL8125 2.5G, USB3, SATA)
+          # 网卡与硬件驱动 (RTL8125 2.5G, BRCM WiFi, USB3, SATA)
           echo "CONFIG_PACKAGE_kmod-r8125=y" >> .config
           echo "CONFIG_PACKAGE_kmod-r8169=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-brcmfmac=y" >> .config
           echo "CONFIG_PACKAGE_kmod-usb3=y" >> .config
           echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
           echo "CONFIG_PACKAGE_kmod-usb-storage-uas=y" >> .config
@@ -130,8 +131,7 @@ jobs:
       - name: 8. 上传 K50S Release 固件产物
         uses: actions/upload-artifact@v4
         with:
-          name: iStoreOS-24.10-ROCEOS-K50S-Firmware
+          name: iStoreOS-24.12-ROCEOS-K50S-Firmware
           path: |
             openwrt/bin/targets/rockchip/armv8/*sysupgrade.img.gz
             openwrt/bin/targets/rockchip/armv8/*.img.gz
-

@@ -10,9 +10,10 @@ cd /home/builder
 sudo rm -rf openwrt
 
 echo "=================================================="
-echo "=== 2. 克隆 iStoreOS 24.10 官方源码 ==="
+echo "=== 2. 克隆 iStoreOS 24.12 最新官方源码 ==="
 echo "=================================================="
-git clone https://github.com/istoreos/istoreos.git -b istoreos-24.10 openwrt
+# 尝试克隆 istoreos-24.12 分支，若不存在则降级使用 main/24.10 分支
+git clone https://github.com/istoreos/istoreos.git -b istoreos-24.12 openwrt || git clone https://github.com/istoreos/istoreos.git -b main openwrt
 cd openwrt
 
 echo "=================================================="
@@ -22,7 +23,7 @@ echo "=================================================="
 ./scripts/feeds install -a
 
 echo "=================================================="
-echo "=== 4. 植入 K50S DTS 设备树与物理网络配置 ==="
+echo "=== 4. 植入 ROCEOS K50S DTS 设备树与物理网络配置 ==="
 echo "=================================================="
 mkdir -p target/linux/rockchip/dts/rockchip/
 cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts" target/linux/rockchip/dts/rockchip/
@@ -41,7 +42,7 @@ define Device/roceos_k50s
   DEVICE_DTS := rockchip/rk3568-roc-k50s
   UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin
   SUPPORTED_DEVICES += roceos,k50s
-  DEVICE_PACKAGES := kmod-brcmfmac
+  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125
 endef
 TARGET_DEVICES += roceos_k50s
 DEVICE_EOF
@@ -52,7 +53,6 @@ mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
 mkdir -p target/linux/rockchip/image/
 cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
 cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
-
 
 mkdir -p files/etc/board.d/
 mkdir -p files/etc/uci-defaults/
@@ -71,7 +71,7 @@ UCI_EOF
 chmod +x files/etc/uci-defaults/99-custom-k50s
 
 echo "=================================================="
-echo "=== 5. 集成 OpenClash 等第三方核心插件 ==="
+echo "=== 5. 集成 OpenClash 及 iStore 应用商店核心 ==="
 echo "=================================================="
 rm -rf /tmp/openclash
 for i in 1 2 3 4 5; do
@@ -88,7 +88,7 @@ fi
 ./scripts/feeds install -a
 
 echo "=================================================="
-echo "=== 6. 生成编译配置文件 .config ==="
+echo "=== 6. 生成 iStoreOS 24.12 编译配置文件 .config ==="
 echo "=================================================="
 cat << 'CFG_EOF' > .config
 CONFIG_TARGET_rockchip=y
@@ -98,6 +98,7 @@ CONFIG_TARGET_KERNEL_PARTSIZE=128
 CONFIG_TARGET_ROOTFS_PARTSIZE=3072
 CONFIG_PACKAGE_kmod-r8125=y
 CONFIG_PACKAGE_kmod-r8169=y
+CONFIG_PACKAGE_kmod-brcmfmac=y
 CONFIG_PACKAGE_kmod-usb3=y
 CONFIG_PACKAGE_kmod-usb-storage=y
 CONFIG_PACKAGE_kmod-usb-storage-uas=y
@@ -127,7 +128,7 @@ make download -j8
 find dl -size -1024c -exec rm -f {} \;
 
 echo "=================================================="
-echo "=== 8. 开始并行编译生成固件 (请保持电脑开机) ==="
+echo "=== 8. 开始并行编译生成 ROCEOS K50S 固件 ==="
 echo "=================================================="
 make -j$(nproc) || make -j1 V=s
 
@@ -140,6 +141,5 @@ cp -f bin/targets/rockchip/armv8/*sysupgrade.img.gz "$OUT_DIR/" 2>/dev/null || t
 cp -f bin/targets/rockchip/armv8/*.img "$OUT_DIR/" 2>/dev/null || true
 
 echo "=================================================="
-echo "=== 🎉 恭喜！本地 K50S iStoreOS 24.10 固件编译成功！ ==="
-echo "=== 固件放置目录: D:\\Antigravity IDE数据文件夹\\K50S-iStoreOS-24.10-Build\\bin_out\\"
+echo "=== 🎉 恭喜！ROCEOS K50S iStoreOS 24.12 固件编译成功！ ==="
 echo "=================================================="

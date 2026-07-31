@@ -1,5 +1,7 @@
 #!/bin/sh
-# ROCEOS K50S Official Network Interface Mapping Specification (Extracted from 原厂 v220307)
+# ROCEOS K50S Network Interface Specification (Aligned with iStoreOS 24.12 & Board Manual)
+# LAN (3x 2.5G Electric Ports): eth0, eth1, eth2
+# WAN (2x SFP Optical Ports): eth3 (Upper SFP), eth4 (Lower SFP)
 
 . /lib/functions/uci-defaults.sh
 . /lib/functions/system.sh
@@ -9,12 +11,10 @@ board=$(board_name)
 
 case "$board" in
 *)
-	# ROCEOS K50S 原厂网口绝对定义：WAN 口为 eth0，LAN 口为 eth1 eth2 eth3 eth4
-	ucidef_set_interfaces_lan_wan 'eth1 eth2 eth3 eth4' 'eth0'
+	ucidef_set_interfaces_lan_wan 'eth0 eth1 eth2' 'eth3 eth4'
 	;;
 esac
 
 board_config_flush
 
 exit 0
-
