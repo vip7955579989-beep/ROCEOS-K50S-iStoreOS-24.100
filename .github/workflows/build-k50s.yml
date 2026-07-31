@@ -126,8 +126,20 @@ jobs:
           find openwrt/bin/targets/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" \) -exec cp -f {} bin_out/ \; 2>/dev/null || true
           touch bin_out/BUILD_COMPLETE.txt
 
-      - name: 8. 上传 K50S Release 固件产物
+      - name: 8. 上传 K50S Release 固件产物 (Artifacts)
         uses: actions/upload-artifact@v4
         with:
           name: iStoreOS-24.12-ROCEOS-K50S-Firmware
           path: bin_out/
+
+      - name: 9. 自动发布固件到 GitHub Release 发行版
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v24.12-K50S-${{ github.run_number }}
+          name: ROCEOS K50S iStoreOS 最新固件 Release v24.12-${{ github.run_number }}
+          body: |
+            🎉 ROCEOS K50S (Rockchip RK3568) 专属 iStoreOS 固件自动编译发布完成！
+            
+            - 适配硬件：RK3568 SoC, 3 个 2.5G 电口 (eth0-2), 2 个 SFP 光口 (eth3-4)
+            - 刷机指引：在 TF 卡/eMMC 写入固件镜像，或者通过 U-Boot/Maskrom 刷入。
+          files: bin_out/*
