@@ -103,15 +103,18 @@ jobs:
       - name: 6. 部署 u-boot 固件镜像依赖并启动编译
         run: |
           cd openwrt
-          # 确保全路径注入 u-boot 二进制防止打包阶段丢失报错
           mkdir -p staging_dir/target-aarch64_generic_musl/image/
           mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
           mkdir -p target/linux/rockchip/image/
           mkdir -p bin/targets/rockchip/armv8/
-          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin
-          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin
-          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
-          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin bin/targets/rockchip/armv8/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+          
+          UBOOT_SRC="$GITHUB_WORKSPACE/u-boot/k50s-rk3568-u-boot-rockchip.bin"
+          if [ -f "$UBOOT_SRC" ]; then
+            cp -f "$UBOOT_SRC" staging_dir/target-aarch64_generic_musl/image/ 2>/dev/null || true
+            cp -f "$UBOOT_SRC" target/linux/rockchip/image/ 2>/dev/null || true
+            cp -f "$UBOOT_SRC" build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/ 2>/dev/null || true
+            cp -f "$UBOOT_SRC" bin/targets/rockchip/armv8/ 2>/dev/null || true
+          fi
           
           export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
