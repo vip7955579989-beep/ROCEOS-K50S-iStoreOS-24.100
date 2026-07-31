@@ -3,19 +3,25 @@ set -e
 
 echo "=== 🚀 开始 ROCEOS K50S (RK3568) 本地极速编译工程 ==="
 
+# 0. 自动设置 WSL2 稳健 DNS 解析 (防止 Could not resolve host 错)
+sudo bash -c 'echo "nameserver 223.5.5.5" > /etc/resolv.conf && echo "nameserver 8.8.8.8" >> /etc/resolv.conf' 2>/dev/null || true
+
 # 1. 避开路径空格限制，在 D 盘创建专用无空格编译区 /mnt/d/K50S_Build
 BUILD_WORK_DIR="/mnt/d/K50S_Build"
 echo "--> 目标 D 盘编译空间: ${BUILD_WORK_DIR}"
 mkdir -p "${BUILD_WORK_DIR}"
 cd "${BUILD_WORK_DIR}"
 
-# 2. 准备 Linux 编译依赖包
-sudo apt-get update -y
-sudo apt-get install -y build-essential clang flex bison gawk gettext git libncurses5-dev libssl-dev python3-distutils python3-pyelftools rsync unzip zlib1g-dev squashfs-tools device-tree-compiler swig python3-dev python3-setuptools
+# 2. 准备 Linux 编译依赖包 (即使 apt 锁住也继续)
+sudo apt-get update -y || true
+sudo apt-get install -y build-essential clang flex bison gawk gettext git libncurses5-dev libssl-dev python3-distutils python3-pyelftools rsync unzip zlib1g-dev squashfs-tools device-tree-compiler swig python3-dev python3-setuptools || true
 
-# 3. 拉取 iStoreOS 24.12 官方源码
+# 3. 拉取 iStoreOS 24.12 官方源码 (自动 DNS + 重试循环)
 if [ ! -d "openwrt" ]; then
-  git clone --depth 1 https://github.com/istoreos/istoreos.git -b istoreos-24.12 openwrt || git clone --depth 1 https://github.com/istoreos/istoreos.git -b main openwrt
+  until git clone --depth 1 https://github.com/istoreos/istoreos.git -b istoreos-24.12 openwrt || git clone --depth 1 https://github.com/istoreos/istoreos.git -b main openwrt; do
+    echo "网络拉取重试中..."
+    sleep 2
+  done
   cd openwrt
   ./scripts/feeds update -a
   ./scripts/feeds install -a
