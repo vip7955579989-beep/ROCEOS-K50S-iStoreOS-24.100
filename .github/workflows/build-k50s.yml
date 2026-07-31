@@ -6,7 +6,7 @@ on:
       lan_ip:
         description: '默认 LAN 口 IP 地址'
         required: true
-        default: '192.168.100.1'
+        default: '192.168.0.254'
   push:
     branches:
       - main
@@ -57,7 +57,7 @@ jobs:
           cp -f files/etc/board.d/02_network openwrt/files/etc/board.d/02_network
           
           LAN_IP="${{ github.event.inputs.lan_ip }}"
-          [ -z "$LAN_IP" ] && LAN_IP="192.168.100.1"
+          [ -z "$LAN_IP" ] && LAN_IP="192.168.0.254"
           
           echo "#!/bin/sh" > openwrt/files/etc/uci-defaults/99-custom-k50s
           echo "uci set network.lan.ipaddr='${LAN_IP}'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
