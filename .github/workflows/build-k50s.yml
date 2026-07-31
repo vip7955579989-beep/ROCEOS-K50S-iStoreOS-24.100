@@ -131,14 +131,10 @@ jobs:
           export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
           make -j$(nproc) || make -j1 V=s
-          
-          # 对打包产物进行通用压缩整理
-          cd bin/targets/rockchip/armv8/
-          gzip -f *.img 2>/dev/null || true
 
       - name: 8. 上传 K50S Release 固件产物
         uses: actions/upload-artifact@v4
         with:
           name: iStoreOS-24.12-ROCEOS-K50S-Firmware
-          if-no-files-found: warn
-          path: openwrt/bin/targets/rockchip/armv8/*
+          path: openwrt/bin/targets/rockchip/armv8/
+          if-no-files-found: ignore
