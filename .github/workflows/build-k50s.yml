@@ -34,7 +34,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 4. 植入 ROCEOS K50S 专用设备树 (DTS) 与板级驱动
+      - name: 4. 植入 ROCEOS K50S 专用设备树 (DTS) 与板级驱动配置
         run: |
           mkdir -p openwrt/target/linux/rockchip/dts/rockchip/
           cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/rockchip/
@@ -43,14 +43,8 @@ jobs:
           TARGET_MK="openwrt/target/linux/rockchip/image/armv8.mk"
           [ ! -f "$TARGET_MK" ] && TARGET_MK="openwrt/target/linux/rockchip/image/Makefile"
           if [ -f "$TARGET_MK" ]; then
-            printf "\ndefine Device/roceos_k50s\n  \$(call Device/rk3568)\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
+            printf "\ndefine Device/roceos_k50s\n  \$(call Device/rk3568)\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
           fi
-          
-          mkdir -p openwrt/staging_dir/target-aarch64_generic_musl/image/
-          mkdir -p openwrt/build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
-          mkdir -p openwrt/target/linux/rockchip/image/
-          cp -f u-boot/k50s-rk3568-u-boot-rockchip.bin openwrt/staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
-          cp -f u-boot/k50s-rk3568-u-boot-rockchip.bin openwrt/target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
 
           mkdir -p openwrt/files/etc/board.d/
           mkdir -p openwrt/files/etc/uci-defaults/
@@ -85,8 +79,6 @@ jobs:
       - name: 6. 配置文件生成与下载依赖包
         run: |
           cd openwrt
-          mkdir -p staging_dir/target-aarch64_generic_musl/image/
-          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
           echo "CONFIG_TARGET_rockchip=y" > .config
           echo "CONFIG_TARGET_rockchip_armv8=y" >> .config
           echo "CONFIG_TARGET_rockchip_armv8_DEVICE_roceos_k50s=y" >> .config
@@ -95,6 +87,7 @@ jobs:
           # 网卡与硬件驱动 (RTL8125 2.5G, BRCM WiFi, USB3, SATA)
           echo "CONFIG_PACKAGE_kmod-r8125=y" >> .config
           echo "CONFIG_PACKAGE_kmod-r8169=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-phy-realtek=y" >> .config
           echo "CONFIG_PACKAGE_kmod-brcmfmac=y" >> .config
           echo "CONFIG_PACKAGE_kmod-usb3=y" >> .config
           echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
@@ -106,8 +99,7 @@ jobs:
           # iStore 商店与核心 UI
           echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-quickstart=y" >> .config
-          # 核心网络与应用组件
-          echo "CONFIG_PACKAGE_dnsmasq=n" >> .config
+          # 核心网络与应用组件 (防止 dnsmasq 包冲突)
           echo "CONFIG_PACKAGE_dnsmasq-full=y" >> .config
           echo "CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y" >> .config
           echo "CONFIG_PACKAGE_dnsmasq_full_ipset=y" >> .config
@@ -118,12 +110,24 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-ttyd=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-diskman=y" >> .config
           make defconfig
+          # 清除基础 dnsmasq 防止包文件冲突崩溃
+          sed -i 's/CONFIG_PACKAGE_dnsmasq=y/# CONFIG_PACKAGE_dnsmasq is not set/' .config
           make download -j8
           find dl -size -1024c -exec rm -f {} \;
 
-      - name: 7. 执行并行编译生成固件
+      - name: 7. 部署 u-boot 固件镜像依赖并启动编译
         run: |
           cd openwrt
+          # 确保全路径注入 u-boot 二进制防止打包阶段丢失报错
+          mkdir -p staging_dir/target-aarch64_generic_musl/image/
+          mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
+          mkdir -p target/linux/rockchip/image/
+          mkdir -p bin/targets/rockchip/armv8/
+          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin
+          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin
+          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+          cp -f ../u-boot/k50s-rk3568-u-boot-rockchip.bin bin/targets/rockchip/armv8/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+          
           export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
           make -j$(nproc) || make -j1 V=s

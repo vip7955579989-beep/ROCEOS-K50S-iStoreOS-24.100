@@ -12,7 +12,6 @@ sudo rm -rf openwrt
 echo "=================================================="
 echo "=== 2. 克隆 iStoreOS 24.12 最新官方源码 ==="
 echo "=================================================="
-# 尝试克隆 istoreos-24.12 分支，若不存在则降级使用 main/24.10 分支
 git clone https://github.com/istoreos/istoreos.git -b istoreos-24.12 openwrt || git clone https://github.com/istoreos/istoreos.git -b main openwrt
 cd openwrt
 
@@ -42,17 +41,11 @@ define Device/roceos_k50s
   DEVICE_DTS := rockchip/rk3568-roc-k50s
   UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin
   SUPPORTED_DEVICES += roceos,k50s
-  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125
+  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek
 endef
 TARGET_DEVICES += roceos_k50s
 DEVICE_EOF
 fi
-
-mkdir -p staging_dir/target-aarch64_generic_musl/image/
-mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
-mkdir -p target/linux/rockchip/image/
-cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
-cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
 
 mkdir -p files/etc/board.d/
 mkdir -p files/etc/uci-defaults/
@@ -98,6 +91,7 @@ CONFIG_TARGET_KERNEL_PARTSIZE=128
 CONFIG_TARGET_ROOTFS_PARTSIZE=3072
 CONFIG_PACKAGE_kmod-r8125=y
 CONFIG_PACKAGE_kmod-r8169=y
+CONFIG_PACKAGE_kmod-phy-realtek=y
 CONFIG_PACKAGE_kmod-brcmfmac=y
 CONFIG_PACKAGE_kmod-usb3=y
 CONFIG_PACKAGE_kmod-usb-storage=y
@@ -108,7 +102,6 @@ CONFIG_PACKAGE_kmod-fs-exfat=y
 CONFIG_PACKAGE_kmod-fs-ntfs3=y
 CONFIG_PACKAGE_luci-app-store=y
 CONFIG_PACKAGE_luci-app-quickstart=y
-CONFIG_PACKAGE_dnsmasq=n
 CONFIG_PACKAGE_dnsmasq-full=y
 CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
 CONFIG_PACKAGE_dnsmasq_full_ipset=y
@@ -121,9 +114,18 @@ CONFIG_PACKAGE_luci-app-diskman=y
 CFG_EOF
 
 make defconfig
+sed -i 's/CONFIG_PACKAGE_dnsmasq=y/# CONFIG_PACKAGE_dnsmasq is not set/' .config
+
 echo "=================================================="
-echo "=== 7. 下载源码依赖包与固件库 ==="
+echo "=== 7. 部署 u-boot 镜像依赖并下载源码包 ==="
 echo "=================================================="
+mkdir -p staging_dir/target-aarch64_generic_musl/image/
+mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
+mkdir -p target/linux/rockchip/image/
+cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" staging_dir/target-aarch64_generic_musl/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" target/linux/rockchip/image/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+cp -f "/mnt/d/Antigravity IDE数据文件夹/K50S-iStoreOS-24.10-Build/u-boot/k50s-rk3568-u-boot-rockchip.bin" build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/k50s-rk3568-u-boot-rockchip.bin 2>/dev/null || true
+
 make download -j8
 find dl -size -1024c -exec rm -f {} \;
 
