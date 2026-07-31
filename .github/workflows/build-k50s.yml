@@ -135,8 +135,10 @@ jobs:
       - name: 8. 归档整理固件发布目录
         run: |
           mkdir -p bin_out
-          cp -f openwrt/bin/targets/rockchip/armv8/* bin_out/ 2>/dev/null || true
-          rm -rf bin_out/packages 2>/dev/null || true
+          if [ -d "openwrt/bin/targets/rockchip/armv8" ]; then
+            find openwrt/bin/targets/rockchip/armv8/ -maxdepth 1 -type f -exec cp -f {} bin_out/ \; 2>/dev/null || true
+          fi
+          touch bin_out/BUILD_COMPLETE.txt
 
       - name: 9. 上传 K50S Release 固件产物
         uses: actions/upload-artifact@v4
