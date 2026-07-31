@@ -123,6 +123,7 @@ jobs:
       - name: 7. 执行并行编译生成固件
         run: |
           cd openwrt
+          export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
           make -j$(nproc) || make -j1 V=s
 
