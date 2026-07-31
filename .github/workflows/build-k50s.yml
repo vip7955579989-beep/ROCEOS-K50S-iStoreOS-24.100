@@ -20,7 +20,7 @@ jobs:
       - name: 1. 检出编译配置库
         uses: actions/checkout@v4
 
-      - name: 2. 原生 Linux 脚本深度释放磁盘空间与准备编译环境
+      - name: 2. 释放 GitHub 云端磁盘空间与准备 Linux 依赖
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -39,13 +39,22 @@ jobs:
       - name: 4. 植入 ROCEOS K50S 专用设备树 (DTS) 与板级驱动配置
         run: |
           mkdir -p openwrt/target/linux/rockchip/dts/rockchip/
-          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/rockchip/
-          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dtsi openwrt/target/linux/rockchip/dts/rockchip/
+          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/rockchip/ 2>/dev/null || true
+          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dtsi openwrt/target/linux/rockchip/dts/rockchip/ 2>/dev/null || true
           
           TARGET_MK="openwrt/target/linux/rockchip/image/armv8.mk"
           [ ! -f "$TARGET_MK" ] && TARGET_MK="openwrt/target/linux/rockchip/image/Makefile"
           if [ -f "$TARGET_MK" ] && ! grep -q "roceos_k50s" "$TARGET_MK"; then
-            printf "\ndefine Device/roceos_k50s\n  DEVICE_VENDOR := ROCEOS\n  DEVICE_MODEL := K50S\n  SOC := rk3568\n  DEVICE_DTS := rockchip/rk3568-roc-k50s\n  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin\n  SUPPORTED_DEVICES += roceos,k50s\n  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek\nendef\nTARGET_DEVICES += roceos_k50s\n" >> "$TARGET_MK"
+            echo "" >> "$TARGET_MK"
+            echo "define Device/roceos_k50s" >> "$TARGET_MK"
+            echo "  DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
+            echo "  DEVICE_MODEL := K50S" >> "$TARGET_MK"
+            echo "  SOC := rk3568" >> "$TARGET_MK"
+            echo "  DEVICE_DTS := rockchip/rk3568-roc-k50s" >> "$TARGET_MK"
+            echo "  SUPPORTED_DEVICES += roceos,k50s" >> "$TARGET_MK"
+            echo "  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek" >> "$TARGET_MK"
+            echo "endef" >> "$TARGET_MK"
+            echo "TARGET_DEVICES += roceos_k50s" >> "$TARGET_MK"
           fi
 
           mkdir -p openwrt/files/etc/board.d/
@@ -102,20 +111,17 @@ jobs:
           make download -j8
           find dl -size -1024c -exec rm -f {} \;
 
-      - name: 6. 部署 u-boot 固件镜像依赖并启动编译
+      - name: 6. 全局注入 u-boot 并执行编译
         run: |
           cd openwrt
-          mkdir -p staging_dir/target-aarch64_generic_musl/image/
-          mkdir -p build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/
-          mkdir -p target/linux/rockchip/image/
-          mkdir -p bin/targets/rockchip/armv8/
-          
           UBOOT_SRC="$GITHUB_WORKSPACE/u-boot/k50s-rk3568-u-boot-rockchip.bin"
+          
+          # 全局穿透注入所有可能需要 U-boot 镜像的路径
           if [ -f "$UBOOT_SRC" ]; then
-            cp -f "$UBOOT_SRC" staging_dir/target-aarch64_generic_musl/image/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" target/linux/rockchip/image/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" bin/targets/rockchip/armv8/ 2>/dev/null || true
+            find . -type d -name "image" -o -name "armv8" | while read dir; do
+              cp -f "$UBOOT_SRC" "$dir/" 2>/dev/null || true
+              cp -f "$UBOOT_SRC" "$dir/rockchip-u-boot-rk3568.bin" 2>/dev/null || true
+            done
           fi
           
           export FORCE_UNSAFE_CONFIGURE=1
