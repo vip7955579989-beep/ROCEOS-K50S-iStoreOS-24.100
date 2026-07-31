@@ -133,8 +133,7 @@ jobs:
           make -j$(nproc) || make -j1 V=s
 
       - name: 8. 上传 K50S Release 固件产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: iStoreOS-24.12-ROCEOS-K50S-Firmware
           path: openwrt/bin/targets/rockchip/armv8/
-          if-no-files-found: ignore
