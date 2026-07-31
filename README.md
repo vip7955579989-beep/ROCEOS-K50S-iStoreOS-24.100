@@ -6,18 +6,25 @@
 
 ## 🌟 系统核心特性与硬件支持
 
-1. **真机黄金设备树 (DTS) 驱动**：
-   - 包含官方底层 CPU、GPU、电源 PMIC (RK809)、PCIe 2.1/3.0 总线、SATA 控制器及 USB 3.0/2.0 支持。
-   - 板载 Wi-Fi 芯片集成 `kmod-brcmfmac` 模块支持。
+基于最新《ROCEOS K50S 开发板官方产品介绍》文档与真机硬件定义：
 
-2. **硬件级 5 网口物理映射 (Ethernet Routing)**：
-   - 物理 WAN 口：`eth0`
-   - 物理 LAN 口：`eth1`, `eth2`, `eth3`, `eth4`
-   - 默认管理 IP：`192.168.0.254`（完全对齐设备底部铭牌与原厂 V220307 规格）。
+| 硬件规格/功能项 | ROCEOS K50S 硬件配置 |
+| :--- | :--- |
+| **主控芯片 (SoC)** | 瑞芯微 Rockchip RK3568 (四核 A55 @ 2.0GHz) |
+| **内存/闪存配置** | 4GB / 8GB LPDDR4 + 32GB / 64GB eMMC 5.1 闪存 |
+| **网络接口** | 5 个物理千兆网口 (WAN: `eth0`, LAN: `eth1`~`eth4`)，支持 2.5G 网卡扩展 |
+| **磁盘扩展** | 原生 SATA 3.0 接口、USB 3.0/2.0 高速扩展 |
+| **无线模块** | 板载 Wi-Fi 芯片 (集成 `kmod-brcmfmac` 驱动) |
+| **供电标准** | DC 12V / 2.5A ~ 4A |
+| **系统兼容性** | iStoreOS 24.10/24.11 (本项目)、Ubuntu, Armbian Linux, Android 9-11 |
 
-3. **预装应用与生态集成**：
+### ⚡ iStoreOS 24.11 专属定制项：
+1. **物理 WAN 口**：`eth0`
+2. **物理 LAN 口**：`eth1`, `eth2`, `eth3`, `eth4`
+3. **默认管理 IP**：`192.168.0.254`（完全匹配设备底部铭牌贴纸与原厂 V220307 规格）
+4. **预装应用与生态集成**：
    - **商店与中心**：`luci-app-store`, `luci-app-quickstart`
-   - **应用插件**：`luci-app-openclash`, `luci-app-dockerman`, `luci-app-samba4`, `luci-app-diskman`, `luci-app-ttyd`
+   - **核心插件**：`luci-app-openclash`, `luci-app-dockerman`, `luci-app-samba4`, `luci-app-diskman`, `luci-app-ttyd`
 
 ---
 
