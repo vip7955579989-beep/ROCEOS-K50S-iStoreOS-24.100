@@ -71,9 +71,14 @@ jobs:
       - name: 5. 集成核心第三方应用 (OpenClash, Docker, Samba4, iStore)
         run: |
           cd openwrt
-          git clone --depth 1 -b master https://github.com/vernesong/OpenClash.git /tmp/openclash
-          cp -r /tmp/openclash/luci-app-openclash package/luci-app-openclash
           rm -rf /tmp/openclash
+          for i in 1 2 3 4 5; do
+            git clone --depth 1 -b master https://github.com/vernesong/OpenClash.git /tmp/openclash && break || sleep 3
+          done
+          if [ -d "/tmp/openclash/luci-app-openclash" ]; then
+            cp -r /tmp/openclash/luci-app-openclash package/luci-app-openclash
+            rm -rf /tmp/openclash
+          fi
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 

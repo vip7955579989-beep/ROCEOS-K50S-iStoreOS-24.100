@@ -71,9 +71,17 @@ chmod +x files/etc/uci-defaults/99-custom-k50s
 echo "=================================================="
 echo "=== 5. 集成 OpenClash 等第三方核心插件 ==="
 echo "=================================================="
-git clone --depth 1 -b master https://github.com/vernesong/OpenClash.git /tmp/openclash
-cp -r /tmp/openclash/luci-app-openclash package/luci-app-openclash
 rm -rf /tmp/openclash
+for i in 1 2 3 4 5; do
+  echo "正在拉取 OpenClash 源码 (尝试 $i/5)..."
+  git clone --depth 1 -b master https://github.com/vernesong/OpenClash.git /tmp/openclash && break || sleep 3
+done
+if [ -d "/tmp/openclash/luci-app-openclash" ]; then
+  cp -r /tmp/openclash/luci-app-openclash package/luci-app-openclash
+  rm -rf /tmp/openclash
+else
+  echo "⚠️ 警告: OpenClash 自动拉取失败，跳过打包应用"
+fi
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
