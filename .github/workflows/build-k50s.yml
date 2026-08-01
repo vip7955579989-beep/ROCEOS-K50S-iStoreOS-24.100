@@ -45,10 +45,12 @@ jobs:
           if [ -f "$TARGET_MK" ] && ! grep -q "roceos_k50s" "$TARGET_MK"; then
             echo "" >> "$TARGET_MK"
             echo "define Device/roceos_k50s" >> "$TARGET_MK"
+            printf '\t%s\n' "\$(call Device/rk3568)" >> "$TARGET_MK"
             printf '\t%s\n' "DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
             printf '\t%s\n' "DEVICE_MODEL := K50S" >> "$TARGET_MK"
             printf '\t%s\n' "SOC := rk3568" >> "$TARGET_MK"
             printf '\t%s\n' "DEVICE_DTS := rockchip/rk3568-roc-k50s" >> "$TARGET_MK"
+            printf '\t%s\n' "UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin" >> "$TARGET_MK"
             printf '\t%s\n' "SUPPORTED_DEVICES += roceos,k50s" >> "$TARGET_MK"
             printf '\t%s\n' "DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek" >> "$TARGET_MK"
             echo "endef" >> "$TARGET_MK"
@@ -149,6 +151,8 @@ jobs:
 
       - name: 9. 自动发布固件到 GitHub Release 发行版
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v24.10-K50S-${{ github.run_id }}
           name: ROCEOS K50S iStoreOS 24.10 硬件适配固件 Release v24.10-${{ github.run_id }}
