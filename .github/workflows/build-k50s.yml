@@ -45,7 +45,7 @@ jobs:
           if [ -f "$TARGET_MK" ] && ! grep -q "roceos_k50s" "$TARGET_MK"; then
             echo "" >> "$TARGET_MK"
             echo "define Device/roceos_k50s" >> "$TARGET_MK"
-            printf '\t%s\n' "\$(call Device/rk3568)" >> "$TARGET_MK"
+            printf '\t%s\n' "\$(call Device/FitImage)" >> "$TARGET_MK"
             printf '\t%s\n' "DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
             printf '\t%s\n' "DEVICE_MODEL := K50S" >> "$TARGET_MK"
             printf '\t%s\n' "SOC := rk3568" >> "$TARGET_MK"
@@ -135,7 +135,12 @@ jobs:
           
           export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
-          make -j$(nproc) || make -j1 V=s
+          if ! make -j$(nproc); then
+            echo "=================================================="
+            echo "多线程编译失败，正在切换单线程提取最精准报错日志..."
+            echo "=================================================="
+            make -j1 V=s
+          fi
 
       - name: 7. 归档整理固件发布目录
         run: |
