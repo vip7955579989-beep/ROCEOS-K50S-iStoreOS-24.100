@@ -1,8 +1,8 @@
-# ROCEOS K50S 专属 iStoreOS 24.12 官方构建仓库
+# ROCEOS K50S 专属 iStoreOS 24.10 官方构建仓库
 
-[![Build K50S iStoreOS 24.12 Firmware](https://github.com/vip7955579989-beep/ROCEOS-K50S-iStoreOS-24.12/actions/workflows/build-k50s.yml/badge.svg)](https://github.com/vip7955579989-beep/ROCEOS-K50S-iStoreOS-24.12/actions/workflows/build-k50s.yml)
+[![Build K50S iStoreOS Firmware](https://github.com/vip7955579989-beep/ROCEOS-K50S-iStoreOS-24.100/actions/workflows/build-k50s.yml/badge.svg)](https://github.com/vip7955579989-beep/ROCEOS-K50S-iStoreOS-24.100/actions/workflows/build-k50s.yml)
 
-本仓库提供针对 **ROCEOS K50S** 软路由/开发板的 **iStoreOS 24.12** 全套固件自动化编译配置、Linux 本地构建脚本以及 GitHub Actions 云端一键构建工作流。
+本仓库提供针对 **ROCEOS K50S** 软路由/开发板的 **iStoreOS 24.10** 全套固件自动化编译配置、Linux 本地构建脚本以及 GitHub Actions 云端一键构建工作流。
 
 ---
 
