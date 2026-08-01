@@ -45,12 +45,12 @@ jobs:
           if [ -f "$TARGET_MK" ] && ! grep -q "roceos_k50s" "$TARGET_MK"; then
             echo "" >> "$TARGET_MK"
             echo "define Device/roceos_k50s" >> "$TARGET_MK"
-            echo "  DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
-            echo "  DEVICE_MODEL := K50S" >> "$TARGET_MK"
-            echo "  SOC := rk3568" >> "$TARGET_MK"
-            echo "  DEVICE_DTS := rockchip/rk3568-roc-k50s" >> "$TARGET_MK"
-            echo "  SUPPORTED_DEVICES += roceos,k50s" >> "$TARGET_MK"
-            echo "  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek" >> "$TARGET_MK"
+            printf '\t%s\n' "DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
+            printf '\t%s\n' "DEVICE_MODEL := K50S" >> "$TARGET_MK"
+            printf '\t%s\n' "SOC := rk3568" >> "$TARGET_MK"
+            printf '\t%s\n' "DEVICE_DTS := rockchip/rk3568-roc-k50s" >> "$TARGET_MK"
+            printf '\t%s\n' "SUPPORTED_DEVICES += roceos,k50s" >> "$TARGET_MK"
+            printf '\t%s\n' "DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek" >> "$TARGET_MK"
             echo "endef" >> "$TARGET_MK"
             echo "TARGET_DEVICES += roceos_k50s" >> "$TARGET_MK"
           fi
@@ -122,11 +122,13 @@ jobs:
           mkdir -p bin/targets/rockchip/armv8/
           
           if [ -f "$UBOOT_SRC" ]; then
-            cp -f "$UBOOT_SRC" staging_dir/target-aarch64_generic_musl/image/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" target/linux/rockchip/image/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" bin/targets/rockchip/armv8/ 2>/dev/null || true
-            cp -f "$UBOOT_SRC" staging_dir/target-aarch64_generic_musl/image/rockchip-u-boot-rk3568.bin 2>/dev/null || true
+            for dest in staging_dir/target-aarch64_generic_musl/image/ target/linux/rockchip/image/ build_dir/target-aarch64_generic_musl/linux-rockchip_armv8/ bin/targets/rockchip/armv8/; do
+              mkdir -p "$dest"
+              cp -f "$UBOOT_SRC" "$dest/k50s-rk3568-u-boot-rockchip.bin" 2>/dev/null || true
+              cp -f "$UBOOT_SRC" "$dest/rockchip-u-boot-rk3568.bin" 2>/dev/null || true
+              cp -f "$UBOOT_SRC" "$dest/rk3568-u-boot.bin" 2>/dev/null || true
+              cp -f "$UBOOT_SRC" "$dest/u-boot-rockchip.bin" 2>/dev/null || true
+            done
           fi
           
           export FORCE_UNSAFE_CONFIGURE=1
