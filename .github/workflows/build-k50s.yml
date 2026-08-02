@@ -79,20 +79,18 @@ EOF
           chmod +x openwrt/files/etc/board.d/02_network
 
           mkdir -p openwrt/files/etc/uci-defaults/
-          LAN_IP="${{ inputs.lan_ip || '192.168.0.254' }}"
-          cat << 'EOF' > openwrt/files/etc/uci-defaults/99-k50s-system-init
+          cat << 'EOF' > openwrt/files/etc/uci-defaults/99-custom-k50s
 #!/bin/sh
-uci set system.@system[0].hostname='ROCEOS-K50S'
-uci set system.@system[0].zonename='Asia/Shanghai'
-uci set system.@system[0].timezone='CST-8'
-uci commit system
-
 uci set network.lan.ipaddr='192.168.0.254'
+uci set system.@system[0].timezone='CST-8'
+uci set system.@system[0].zonename='Asia/Shanghai'
+uci set system.@system[0].led_green='green:sys'
+uci set system.@system[0].default_trigger='heartbeat'
 uci commit network
-
+uci commit system
 exit 0
 EOF
-          chmod +x openwrt/files/etc/uci-defaults/99-k50s-system-init
+          chmod +x openwrt/files/etc/uci-defaults/99-custom-k50s
 
       - name: 5. 配置文件生成与下载依赖包
         run: |
@@ -101,9 +99,10 @@ EOF
           echo "CONFIG_TARGET_rockchip=y" > .config
           echo "CONFIG_TARGET_rockchip_armv8=y" >> .config
           echo "CONFIG_TARGET_rockchip_armv8_DEVICE_roceos_k50s=y" >> .config
-          echo "CONFIG_TARGET_MULTI_PROFILE=y" >> .config
-          echo "CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_roceos_k50s=y" >> .config
+          echo "CONFIG_TARGET_KERNEL_PARTSIZE=128" >> .config
+          echo "CONFIG_TARGET_ROOTFS_PARTSIZE=3072" >> .config
           echo "CONFIG_PACKAGE_kmod-r8125=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-r8169=y" >> .config
           echo "CONFIG_PACKAGE_kmod-phy-realtek=y" >> .config
           echo "CONFIG_PACKAGE_kmod-brcmfmac=y" >> .config
           echo "CONFIG_PACKAGE_kmod-usb3=y" >> .config
@@ -150,20 +149,13 @@ EOF
           
           export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
-          if ! make -j$(nproc); then
-            echo "=================================================="
-            echo "多线程编译失败，正在切换单线程提取最精准报错日志..."
-            echo "=================================================="
-            make -j1 V=s | tee build_err.log || (tail -n 250 build_err.log && false)
-          fi
+          make -j$(nproc) || make -j1 V=s
 
-      - name: 7. 万能归档整理固件发布目录
+      - name: 7. 归档整理固件发布目录
         run: |
           mkdir -p bin_out
-          cp -fv openwrt/bin/targets/rockchip/armv8/* bin_out/ 2>/dev/null || true
-          find openwrt/bin/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" -o -name "*.tar.gz" \) -exec cp -fv {} bin_out/ \; 2>/dev/null || true
+          find openwrt/bin/targets/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" \) -exec cp -fv {} bin_out/ \; 2>/dev/null || true
           echo "Build finished at $(date)" > bin_out/BUILD_COMPLETE.txt
-          echo "=== bin_out Contents ==="
           ls -la bin_out/
 
       - name: 8. 上传 K50S Release 固件产物 (Artifacts)
@@ -177,16 +169,16 @@ EOF
         if: success() && !cancelled()
         with:
           tag_name: v24.10-K50S-Build${{ github.run_number }}
-          name: ROCEOS K50S iStoreOS 固件 Release v24.10-Build${{ github.run_number }}
+          name: ROCEOS K50S iStoreOS 24.10 硬件适配固件 Release v24.10-Build${{ github.run_number }}
           body: |
-            🎉 ROCEOS K50S iStoreOS 24.10 官方最新构建固件已发布！
-            - 适配硬件：RK3568 SoC, 3电口(2.5G) + 2光口(SFP)
-            - 包含 iStore 软件商店
-            - 默认 LAN 口 IP：192.168.0.254
+            🎉 ROCEOS K50S (Rockchip RK3568) 专属 iStoreOS 24.10 深度硬件适配固件自动编译发布完成！
+            
+            - 适配硬件：RK3568 SoC, 3 个 2.5G 电口 (eth0-2), 2 个 SFP 光口 (eth3-4)
+            - 完美修复：RUN 心跳指示灯、全网口链路激活、物理 U-Boot Bootloader 穿透注入
+            - 默认 LAN IP：192.168.0.254
           files: bin_out/*
           fail_on_unmatched_files: false
           make_latest: true
           overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
