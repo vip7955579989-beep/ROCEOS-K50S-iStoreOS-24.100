@@ -45,10 +45,9 @@ jobs:
           if [ -f "$TARGET_MK" ] && ! grep -q "roceos_k50s" "$TARGET_MK"; then
             echo "" >> "$TARGET_MK"
             echo "define Device/roceos_k50s" >> "$TARGET_MK"
-            echo "  \$(call Device/FitImage)" >> "$TARGET_MK"
+            echo "  \$(call Device/rk3568)" >> "$TARGET_MK"
             echo "  DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
             echo "  DEVICE_MODEL := K50S" >> "$TARGET_MK"
-            echo "  SOC := rk3568" >> "$TARGET_MK"
             echo "  DEVICE_DTS := rockchip/rk3568-roc-k50s" >> "$TARGET_MK"
             echo "  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin" >> "$TARGET_MK"
             echo "  SUPPORTED_DEVICES += roceos,k50s" >> "$TARGET_MK"
@@ -139,7 +138,7 @@ jobs:
             echo "=================================================="
             echo "多线程编译失败，正在切换单线程提取最精准报错日志..."
             echo "=================================================="
-            make -j1 V=s
+            make -j1 V=s | tee build_err.log || (tail -n 250 build_err.log && false)
           fi
 
       - name: 7. 归档整理固件发布目录
