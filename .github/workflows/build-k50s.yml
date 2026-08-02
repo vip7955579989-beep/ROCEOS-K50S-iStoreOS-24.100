@@ -144,8 +144,10 @@ jobs:
       - name: 7. 归档整理固件发布目录
         run: |
           mkdir -p bin_out
-          find openwrt/bin/targets/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" \) -exec cp -f {} bin_out/ \; 2>/dev/null || true
+          cp -fv openwrt/bin/targets/rockchip/armv8/* bin_out/ 2>/dev/null || true
+          find openwrt/bin/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" \) -exec cp -fv {} bin_out/ \; 2>/dev/null || true
           touch bin_out/BUILD_COMPLETE.txt
+          ls -la bin_out/
 
       - name: 8. 上传 K50S Release 固件产物 (Artifacts)
         uses: actions/upload-artifact@v4
@@ -167,3 +169,4 @@ jobs:
             - 完美修复：RUN 心跳指示灯、全网口链路激活、物理 U-Boot Bootloader 穿透注入
             - 默认 LAN IP：192.168.0.254
           files: bin_out/*
+          fail_on_unmatched_files: false
