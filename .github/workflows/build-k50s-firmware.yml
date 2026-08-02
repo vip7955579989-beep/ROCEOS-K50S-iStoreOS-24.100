@@ -2,12 +2,6 @@ name: Build ROCEOS K50S iStoreOS Firmware
 
 on:
   workflow_dispatch:
-    inputs:
-      lan_ip:
-        description: 'Default LAN IP Address'
-        required: true
-        default: '192.168.0.254'
-        type: string
   push:
     branches:
       - main
@@ -64,11 +58,8 @@ EOF
           mkdir -p openwrt/files/etc/uci-defaults/
           cp -f files/etc/board.d/02_network openwrt/files/etc/board.d/02_network 2>/dev/null || true
           
-          LAN_IP="${{ github.event.inputs.lan_ip }}"
-          [ -z "$LAN_IP" ] && LAN_IP="192.168.0.254"
-          
           echo "#!/bin/sh" > openwrt/files/etc/uci-defaults/99-custom-k50s
-          echo "uci set network.lan.ipaddr='${LAN_IP}'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci set network.lan.ipaddr='192.168.0.254'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
           echo "uci set system.@system[0].timezone='CST-8'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
           echo "uci set system.@system[0].zonename='Asia/Shanghai'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
           echo "uci set system.@system[0].led_green='green:sys'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
