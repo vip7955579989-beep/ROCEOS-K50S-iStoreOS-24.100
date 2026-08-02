@@ -79,16 +79,15 @@ EOF
           chmod +x openwrt/files/etc/board.d/02_network
 
           mkdir -p openwrt/files/etc/uci-defaults/
-          LAN_IP="${{ github.event.inputs.lan_ip }}"
-          [ -z "$LAN_IP" ] && LAN_IP="192.168.0.254"
-          cat << EOF > openwrt/files/etc/uci-defaults/99-k50s-system-init
+          LAN_IP="${{ inputs.lan_ip || '192.168.0.254' }}"
+          cat << 'EOF' > openwrt/files/etc/uci-defaults/99-k50s-system-init
 #!/bin/sh
 uci set system.@system[0].hostname='ROCEOS-K50S'
 uci set system.@system[0].zonename='Asia/Shanghai'
 uci set system.@system[0].timezone='CST-8'
 uci commit system
 
-uci set network.lan.ipaddr='${LAN_IP}'
+uci set network.lan.ipaddr='192.168.0.254'
 uci commit network
 
 exit 0
