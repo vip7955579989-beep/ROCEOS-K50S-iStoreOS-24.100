@@ -38,7 +38,9 @@ jobs:
         run: |
           mkdir -p openwrt/target/linux/rockchip/dts/rockchip/
           cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/rockchip/ 2>/dev/null || true
+          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dtsi openwrt/target/linux/rockchip/dts/rockchip/ 2>/dev/null || true
           cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/ 2>/dev/null || true
+          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dtsi openwrt/target/linux/rockchip/dts/ 2>/dev/null || true
           
           TARGET_MK="openwrt/target/linux/rockchip/image/armv8.mk"
           [ ! -f "$TARGET_MK" ] && TARGET_MK="openwrt/target/linux/rockchip/image/Makefile"
@@ -77,16 +79,16 @@ EOF
           chmod +x openwrt/files/etc/board.d/02_network
 
           mkdir -p openwrt/files/etc/uci-defaults/
-          cat << 'EOF' > openwrt/files/etc/uci-defaults/99-k50s-system-init
+          LAN_IP="${{ github.event.inputs.lan_ip }}"
+          [ -z "$LAN_IP" ] && LAN_IP="192.168.0.254"
+          cat << EOF > openwrt/files/etc/uci-defaults/99-k50s-system-init
 #!/bin/sh
 uci set system.@system[0].hostname='ROCEOS-K50S'
 uci set system.@system[0].zonename='Asia/Shanghai'
 uci set system.@system[0].timezone='CST-8'
 uci commit system
 
-LAN_IP="${{ github.event.inputs.lan_ip }}"
-[ -z "$LAN_IP" ] && LAN_IP="192.168.0.254"
-uci set network.lan.ipaddr="$LAN_IP"
+uci set network.lan.ipaddr='${LAN_IP}'
 uci commit network
 
 exit 0
@@ -171,19 +173,12 @@ EOF
           name: iStoreOS-24.10-ROCEOS-K50S-Firmware
           path: bin_out/
 
-      - name: 9. 生成唯一发布 Tag 变量
-        id: tag
-        run: |
-          TAG_NAME="v24.10-K50S-Run${{ github.run_number }}-${{ github.run_id }}"
-          echo "release_tag=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "status=success" >> $GITHUB_OUTPUT
-
-      - name: 10. 自动发布固件到 GitHub Release 发行版
+      - name: 9. 自动发布固件到 GitHub Release 发行版
         uses: softprops/action-gh-release@v2
-        if: steps.tag.outputs.status == 'success' && !cancelled()
+        if: success() && !cancelled()
         with:
-          tag_name: ${{ steps.tag.outputs.release_tag }}
-          name: ROCEOS K50S iStoreOS 最新固件 Release ${{ steps.tag.outputs.release_tag }}
+          tag_name: v24.10-K50S-Build${{ github.run_number }}
+          name: ROCEOS K50S iStoreOS 固件 Release v24.10-Build${{ github.run_number }}
           body: |
             🎉 ROCEOS K50S iStoreOS 24.10 官方最新构建固件已发布！
             - 适配硬件：RK3568 SoC, 3电口(2.5G) + 2光口(SFP)
@@ -191,5 +186,8 @@ EOF
             - 默认 LAN 口 IP：192.168.0.254
           files: bin_out/*
           fail_on_unmatched_files: false
+          make_latest: true
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
