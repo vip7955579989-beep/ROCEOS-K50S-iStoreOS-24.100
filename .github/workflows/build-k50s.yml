@@ -167,5 +167,5 @@ jobs:
             - 完美修复：RUN 心跳指示灯、全网口链路激活、物理 U-Boot Bootloader 穿透注入
             - 默认 LAN IP：192.168.0.254
           files: bin_out/*
-          overwrite: true
+          overwrite_files: true
           make_latest: true
