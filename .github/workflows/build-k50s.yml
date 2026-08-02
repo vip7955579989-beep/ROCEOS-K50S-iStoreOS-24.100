@@ -39,68 +39,53 @@ jobs:
           mkdir -p openwrt/target/linux/rockchip/dts/rockchip/
           cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/rockchip/ 2>/dev/null || true
           cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dtsi openwrt/target/linux/rockchip/dts/rockchip/ 2>/dev/null || true
-          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dts openwrt/target/linux/rockchip/dts/ 2>/dev/null || true
-          cp -f patches/target/linux/rockchip/dts/rk3568-roc-k50s.dtsi openwrt/target/linux/rockchip/dts/ 2>/dev/null || true
           
           TARGET_MK="openwrt/target/linux/rockchip/image/armv8.mk"
           [ ! -f "$TARGET_MK" ] && TARGET_MK="openwrt/target/linux/rockchip/image/Makefile"
           if [ -f "$TARGET_MK" ] && ! grep -q "roceos_k50s" "$TARGET_MK"; then
-            echo "" >> "$TARGET_MK"
-            echo "define Device/roceos_k50s" >> "$TARGET_MK"
-            echo "  \$(call Device/rk3568)" >> "$TARGET_MK"
-            echo "  DEVICE_VENDOR := ROCEOS" >> "$TARGET_MK"
-            echo "  DEVICE_MODEL := K50S" >> "$TARGET_MK"
-            echo "  DEVICE_DTS := rockchip/rk3568-roc-k50s" >> "$TARGET_MK"
-            echo "  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin" >> "$TARGET_MK"
-            echo "  SUPPORTED_DEVICES += roceos,k50s" >> "$TARGET_MK"
-            echo "  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek" >> "$TARGET_MK"
-            echo "endef" >> "$TARGET_MK"
-            echo "TARGET_DEVICES += roceos_k50s" >> "$TARGET_MK"
+            cat << 'EOF' >> "$TARGET_MK"
+
+define Device/roceos_k50s
+  $(call Device/rk3568)
+  DEVICE_VENDOR := ROCEOS
+  DEVICE_MODEL := K50S
+  SOC := rk3568
+  DEVICE_DTS := rockchip/rk3568-roc-k50s
+  UBOOT_IMAGE := k50s-rk3568-u-boot-rockchip.bin
+  SUPPORTED_DEVICES += roceos,k50s
+  DEVICE_PACKAGES := kmod-brcmfmac kmod-r8125 kmod-phy-realtek
+endef
+TARGET_DEVICES += roceos_k50s
+EOF
           fi
 
           mkdir -p openwrt/files/etc/board.d/
-          cat << 'EOF' > openwrt/files/etc/board.d/02_network
-#!/bin/sh
-. /lib/functions/uci-defaults.sh
-board_config_update
-board=$(board_name)
-case "$board" in
-roceos,k50s|\
-rockchip,rk3568-roc-k50s)
-  ucidef_set_interfaces_lan_wan "eth1 eth2 eth3 eth4" "eth0"
-  ;;
-*)
-  ucidef_set_interfaces_lan_wan "eth1 eth2 eth3" "eth0"
-  ;;
-esac
-board_config_flush
-exit 0
-EOF
-          chmod +x openwrt/files/etc/board.d/02_network
-
           mkdir -p openwrt/files/etc/uci-defaults/
-          cat << 'EOF' > openwrt/files/etc/uci-defaults/99-custom-k50s
-#!/bin/sh
-uci set network.lan.ipaddr='192.168.0.254'
-uci set system.@system[0].timezone='CST-8'
-uci set system.@system[0].zonename='Asia/Shanghai'
-uci set system.@system[0].led_green='green:sys'
-uci set system.@system[0].default_trigger='heartbeat'
-uci commit network
-uci commit system
-exit 0
-EOF
+          cp -f files/etc/board.d/02_network openwrt/files/etc/board.d/02_network 2>/dev/null || true
+          
+          LAN_IP="${{ github.event.inputs.lan_ip }}"
+          [ -z "$LAN_IP" ] && LAN_IP="192.168.0.254"
+          
+          echo "#!/bin/sh" > openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci set network.lan.ipaddr='${LAN_IP}'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci set system.@system[0].timezone='CST-8'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci set system.@system[0].zonename='Asia/Shanghai'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci set system.@system[0].led_green='green:sys'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci set system.@system[0].default_trigger='heartbeat'" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci commit network" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "uci commit system" >> openwrt/files/etc/uci-defaults/99-custom-k50s
+          echo "exit 0" >> openwrt/files/etc/uci-defaults/99-custom-k50s
           chmod +x openwrt/files/etc/uci-defaults/99-custom-k50s
 
       - name: 5. 配置文件生成与下载依赖包
         run: |
           cd openwrt
-          rm -f .config
           echo "CONFIG_TARGET_rockchip=y" > .config
           echo "CONFIG_TARGET_rockchip_armv8=y" >> .config
           echo "CONFIG_TARGET_rockchip_armv8_DEVICE_roceos_k50s=y" >> .config
           echo "CONFIG_TARGET_KERNEL_PARTSIZE=128" >> .config
           echo "CONFIG_TARGET_ROOTFS_PARTSIZE=3072" >> .config
+          # 网卡与硬件驱动 (RTL8125 2.5G, BRCM WiFi, USB3, SATA)
           echo "CONFIG_PACKAGE_kmod-r8125=y" >> .config
           echo "CONFIG_PACKAGE_kmod-r8169=y" >> .config
           echo "CONFIG_PACKAGE_kmod-phy-realtek=y" >> .config
@@ -112,8 +97,10 @@ EOF
           echo "CONFIG_PACKAGE_kmod-fs-ext4=y" >> .config
           echo "CONFIG_PACKAGE_kmod-fs-exfat=y" >> .config
           echo "CONFIG_PACKAGE_kmod-fs-ntfs3=y" >> .config
+          # iStore 商店与核心 UI
           echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-quickstart=y" >> .config
+          # 核心网络与应用组件 (防止 dnsmasq 包冲突)
           echo "CONFIG_PACKAGE_dnsmasq-full=y" >> .config
           echo "CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y" >> .config
           echo "CONFIG_PACKAGE_dnsmasq_full_ipset=y" >> .config
@@ -123,6 +110,7 @@ EOF
           echo "CONFIG_PACKAGE_luci-app-ttyd=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-diskman=y" >> .config
           make defconfig
+          # 清除基础 dnsmasq 防止包文件冲突崩溃
           sed -i 's/CONFIG_PACKAGE_dnsmasq=y/# CONFIG_PACKAGE_dnsmasq is not set/' .config
           make download -j8
           find dl -size -1024c -exec rm -f {} \;
@@ -149,14 +137,18 @@ EOF
           
           export FORCE_UNSAFE_CONFIGURE=1
           echo -e "$(nproc) thread compile"
-          make -j$(nproc) || make -j1 V=s
+          if ! make -j$(nproc); then
+            echo "=================================================="
+            echo "多线程编译失败，正在切换单线程提取最精准报错日志..."
+            echo "=================================================="
+            make -j1 V=s
+          fi
 
       - name: 7. 归档整理固件发布目录
         run: |
           mkdir -p bin_out
-          find openwrt/bin/targets/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" \) -exec cp -fv {} bin_out/ \; 2>/dev/null || true
-          echo "Build finished at $(date)" > bin_out/BUILD_COMPLETE.txt
-          ls -la bin_out/
+          find openwrt/bin/targets/ -type f \( -name "*.img*" -o -name "*.bin" -o -name "*.manifest" -o -name "*.buildinfo" \) -exec cp -f {} bin_out/ \; 2>/dev/null || true
+          touch bin_out/BUILD_COMPLETE.txt
 
       - name: 8. 上传 K50S Release 固件产物 (Artifacts)
         uses: actions/upload-artifact@v4
@@ -166,7 +158,6 @@ EOF
 
       - name: 9. 自动发布固件到 GitHub Release 发行版
         uses: softprops/action-gh-release@v2
-        if: success() && !cancelled()
         with:
           tag_name: v24.10-K50S-Build${{ github.run_number }}
           name: ROCEOS K50S iStoreOS 24.10 硬件适配固件 Release v24.10-Build${{ github.run_number }}
@@ -178,7 +169,7 @@ EOF
             - 默认 LAN IP：192.168.0.254
           files: bin_out/*
           fail_on_unmatched_files: false
-          make_latest: true
           overwrite: true
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
