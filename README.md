@@ -1,4 +1,4 @@
-# ROCEOS K50S 专属 iStoreOS 24.10 官方构建仓库
+# ROCEOS K50S 专属 iStoreOS 24.100 官方构建仓库
 
 [![Build K50S iStoreOS Firmware](https://github.com/vip7955579989-beep/ROCEOS-K50S-iStoreOS-24.100/actions/workflows/build-k50s.yml/badge.svg)](https://github.com/vip7955579989-beep/ROCEOS-K50S-iStoreOS-24.100/actions/workflows/build-k50s.yml)
 
